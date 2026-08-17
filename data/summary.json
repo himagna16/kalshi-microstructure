@@ -1,0 +1,33 @@
+{
+  "snapshots": 8055608,
+  "ts_min_ms": 1785385800301,
+  "ts_max_ms": 1786941307320,
+  "distinct_tickers": 54380,
+  "cycles": 36611,
+  "settled_markets": 427017,
+  "settled_yes": 179156,
+  "settled_with_books": 52732,
+  "quote_state": {
+    "two_sided": 3081188,
+    "one_sided": 4878145,
+    "empty": 96510
+  },
+  "brier_by_horizon": {
+    "0": {
+      "brier": 0.009413817656846577,
+      "n": 10217
+    },
+    "1": {
+      "brier": 0.018327326388889002,
+      "n": 720
+    },
+    "6": {
+      "brier": 0.048090546218487414,
+      "n": 714
+    },
+    "24": {
+      "brier": 0.06166130136986296,
+      "n": 292
+    }
+  }
+}
