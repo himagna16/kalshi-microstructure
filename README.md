@@ -205,9 +205,13 @@ Fixes now in place:
 
 ## What's next
 
-- **Collect the trade tape.** Kalshi exposes a trades endpoint the collector
-  doesn't poll yet. With actual prints, the maker sim gets queue-aware fills
-  instead of the through-price bound — the single highest-value data upgrade.
+- **Collect the trade tape — LIVE as of 2026-08-17.**
+  [scripts/collect_trades.py](scripts/collect_trades.py) polls Kalshi's public
+  global trades feed every 15s into its own DB (separate process and file, so
+  the snapshot collector's unbroken streak is never at risk; watermark +
+  `INSERT OR IGNORE` make it restart-safe with zero duplicates). Once a few
+  weeks of prints accumulate, the maker sim gets queue-aware fills instead of
+  the through-price bound.
 - **The favorites edge, properly.** Cluster-robust errors (by settlement
   hour × underlying) on the +1.5¢ result, and out-of-sample validation as
   more data accumulates.
