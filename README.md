@@ -126,6 +126,34 @@ Quoting rates crater between 1–4pm ET (28% two-sided at 3pm vs ~42% overnight)
 and average spreads spike around 3–4am ET. If you need to get in or out of
 these markets, the afternoon air-pocket is the worst time to need it.
 
+### 6. What survives execution costs — backtests
+
+Finding #4 says longshots are overpriced *at the mid*. Can you actually make
+money on that? Three settlement-hold strategies, entered at the **last
+displayed quote** between 6h and 15min before close, one contract at the
+touch, taker fees paid ([scripts/strategy_backtest.py](scripts/strategy_backtest.py)):
+
+![Strategy P&L](charts/strategy_pnl.png)
+
+- **Buying longshots at the ask loses 3.1¢/contract (t = -8.9).** On a ~10¢
+  ticket that's a ~-25% return per trade. The retail lottery is provably,
+  massively -EV.
+- **But fading them earns nothing (+0.2¢, t = 0.6).** To sell the longshot you
+  buy NO at ~90¢: crossing that spread plus the fee consumes the entire bias.
+  The market is *inefficient at the mid and efficient at the touch* — the
+  textbook no-free-lunch result, measured.
+- **Backing favorites at 80–97¢ nets +1.5¢/contract (t = 2.2)** — the one
+  candidate edge. Treat the t-stat skeptically: same-hour strikes settle on
+  the same underlying print, so outcomes are correlated and effective sample
+  size is well below n = 1,145; and it's the best of three tested strategies.
+- **The passive maker gets run over.** Quoting both sides at the touch on BTC
+  hourly, with fills only when price trades *through* the quote: buys lose
+  4.1¢/fill, sells 8.2¢/fill, -$913 total across 14,690 fills — versus 1–3¢
+  of spread capture. Through-price fills are the pessimistic bound (every fill
+  is by definition adversely selected, and benign at-price fills are missed),
+  but the size of the number shows why market making without pull logic or a
+  fair-value signal is structurally losing, even fee-free.
+
 ## Caveats — read before believing
 
 - **Six crypto series ≠ Kalshi.** Politics, econ, weather markets may differ.
@@ -161,22 +189,29 @@ Everything runs on one 1 vCPU / 1GB / 24GB droplet ($6/mo):
   ~19MB and growing)
 - Headroom: 14GB free → **~2.8 months at current burn**
 
-Planned fixes (not yet applied):
+Fixes now in place:
 
-1. **Cap nightly backups at 7** — frees ~1.2GB immediately and bounds growth.
-2. **Monthly cold archive** — export rows older than 30 days to zstd-compressed
-   Parquet (5–8× smaller), pull off-box (local disk or object storage at
-   ~$0.006/GB/mo), then `DELETE` + `VACUUM`. Keeps the live DB at a steady
-   ~4.5GB while retaining full history for pennies.
-3. Fallback: DigitalOcean block storage at $1/10GB/mo if the archive job ever
-   falls behind.
+1. **Per-prefix backup retention** — the big append-only book DB keeps 2 daily
+   + 1 weekly nightly copies; the small critical trading state keeps 5 + 4.
+   Freed 1.4GB immediately and bounds backup growth.
+2. **Monthly cold archive** ([scripts/archive_books.py](scripts/archive_books.py),
+   installed as `kalshi-archive.timer`) — once a calendar month is fully older
+   than 30 days it's streamed to `books-YYYYMM.csv.gz` (~6× smaller), the row
+   count is verified against the DB, and only then are rows deleted and the DB
+   vacuumed (collector paused for the vacuum only). Caps the live DB at ~two
+   months of data.
+3. Off-box copies of the latest backups live on a local machine; DigitalOcean
+   block storage at $1/10GB/mo is the fallback if the archive falls behind.
 
 ## What's next
 
-- **Maker-side simulation**: given fee-free maker fills, what does quoting
-  BTC hourly at the touch earn, marked out against settlement?
+- **Collect the trade tape.** Kalshi exposes a trades endpoint the collector
+  doesn't poll yet. With actual prints, the maker sim gets queue-aware fills
+  instead of the through-price bound — the single highest-value data upgrade.
+- **The favorites edge, properly.** Cluster-robust errors (by settlement
+  hour × underlying) on the +1.5¢ result, and out-of-sample validation as
+  more data accumulates.
 - **Depth-weighted mids**: the depth JSON is sitting there unused — recompute
   calibration with size-weighted prices.
-- **Markouts**: price impact after large top-of-book size changes.
 - **Cross-market consistency**: BTC hourly vs daily threshold ladders imply
   overlapping distributions — do they agree?

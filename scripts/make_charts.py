@@ -143,3 +143,36 @@ style(ax)
 save(fig, "daily_collection.png")
 
 print("all charts rendered")
+
+# --- 6. strategy backtest (only if backtest results are present) -------------
+tt_path = os.path.join(DATA, "taker_trades.csv")
+if os.path.exists(tt_path):
+    t = pd.read_csv(tt_path)
+    m = pd.read_csv(os.path.join(DATA, "maker_fills.csv"))
+    rows = []
+    for label, pnl in [
+        ("Buy longshots at ask\n(the retail trade)", t[t.strategy == "lotto_yes"].pnl),
+        ("Fade longshots: buy NO\nat ask, hold to settle", t[t.strategy == "fade_no"].pnl),
+        ("Back favorites at ask\n(80–97¢)", t[t.strategy == "fav_yes"].pnl),
+        ("Passive maker, buys\n(through-price fills)", m[m.side == "buy"].pnl),
+        ("Passive maker, sells\n(through-price fills)", m[m.side == "sell"].pnl),
+    ]:
+        rows.append((label, pnl.mean() * 100,
+                     1.96 * pnl.std() * 100 / len(pnl) ** 0.5, len(pnl)))
+    fig, ax = plt.subplots(figsize=(7.6, 4.8))
+    ys = range(len(rows))[::-1]
+    for y, (label, mean, ci, n) in zip(ys, rows):
+        ax.barh(y, mean, color=BLUE if mean >= 0 else ORANGE, height=0.55)
+        ax.errorbar(mean, y, xerr=ci, color=INK_2, capsize=3, lw=1)
+        ax.annotate(f"{mean:+.1f}¢  (n={n:,})",
+                    (mean + (ci + 0.35) * (1 if mean >= 0 else -1), y),
+                    va="center", ha="left" if mean >= 0 else "right",
+                    fontsize=8.5, color=INK_2)
+    ax.axvline(0, color=BASELINE, lw=1)
+    ax.set_yticks(list(ys), [r[0] for r in rows], fontsize=8.5)
+    ax.set_xlabel("Mean P&L per contract (cents, after fees, 95% CI)")
+    ax.set_title("What survives real execution costs — and what doesn't")
+    ax.set_xlim(-13, 6.5)
+    style(ax, ygrid_only=False)
+    ax.grid(axis="y", visible=False)
+    save(fig, "strategy_pnl.png")
