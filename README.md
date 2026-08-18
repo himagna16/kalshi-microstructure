@@ -171,6 +171,10 @@ touch, taker fees paid ([scripts/strategy_backtest.py](scripts/strategy_backtest
 ## Repo layout
 
 ```
+scripts/collect.py             # the orderbook collector itself (public API, no credentials)
+scripts/collect_trades.py      # trade-tape collector (separate service + DB)
+scripts/archive_books.py       # monthly cold-storage archiver
+scripts/strategy_backtest.py   # execution-aware backtests (section 6)
 scripts/aggregate_droplet.py   # runs on the droplet, streams SQL aggregates → CSV
 scripts/make_charts.py         # renders charts/ from data/
 data/                          # small CSV aggregates (the 2.6GB raw DB stays on the droplet)
@@ -179,6 +183,13 @@ charts/                        # PNGs used above
 
 Reproduce: run `aggregate_droplet.py` wherever the SQLite DB lives, copy
 `analysis_out/` to `data/`, then `python scripts/make_charts.py`.
+
+**Run your own collector:** both collectors hit Kalshi's *public* market-data
+endpoints — no account, no API key, nothing that can spend money. `pip install
+requests`, point `DB_PATH` somewhere writable, and run `collect.py` (orderbook
+snapshots) and/or `collect_trades.py` (trade tape) under systemd or any
+process supervisor. A $6/month VPS handles both with room to spare; expect
+~150MB/day for books at this configuration and a few MB/day for the tape.
 
 ## Infrastructure & the storage problem
 
