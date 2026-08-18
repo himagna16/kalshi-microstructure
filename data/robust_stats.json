@@ -1,0 +1,29 @@
+{
+  "fade_no": {
+    "n_trades": 3256,
+    "n_clusters": 1566,
+    "mean_pnl": 0.00196,
+    "se_iid": 0.00353,
+    "t_iid": 0.56,
+    "se_clustered": 0.00338,
+    "t_clustered": 0.58
+  },
+  "fav_yes": {
+    "n_trades": 1145,
+    "n_clusters": 893,
+    "mean_pnl": 0.01545,
+    "se_iid": 0.00704,
+    "t_iid": 2.2,
+    "se_clustered": 0.00723,
+    "t_clustered": 2.14
+  },
+  "lotto_yes": {
+    "n_trades": 3256,
+    "n_clusters": 1566,
+    "mean_pnl": -0.03134,
+    "se_iid": 0.00354,
+    "t_iid": -8.86,
+    "se_clustered": 0.00338,
+    "t_clustered": -9.27
+  }
+}

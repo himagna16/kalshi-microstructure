@@ -28,6 +28,9 @@ DB = "/root/kalshi/kalshi_data.db"
 OUT = "/root/analysis_out"
 os.makedirs(OUT, exist_ok=True)
 
+MIN_CLOSE_MS = int(os.environ.get("MIN_CLOSE_MS", 0))
+MAX_CLOSE_MS = int(os.environ.get("MAX_CLOSE_MS", 1 << 62))
+
 db = sqlite3.connect(f"file:{DB}?mode=ro", uri=True)
 TWO_SIDED = "yes_bid IS NOT NULL AND yes_ask IS NOT NULL"
 
@@ -42,8 +45,9 @@ settled = db.execute("""
     SELECT s.ticker, s.series, s.result = 'yes', s.close_ms
     FROM settled_markets s
     WHERE s.close_ms IS NOT NULL
+      AND s.close_ms >= ? AND s.close_ms < ?
       AND EXISTS (SELECT 1 FROM book_snapshots b WHERE b.ticker = s.ticker)
-""").fetchall()
+""", (MIN_CLOSE_MS, MAX_CLOSE_MS)).fetchall()
 
 H_MIN_MS = 15 * 60 * 1000          # entry no later than 15 min before close
 H_MAX_MS = 6 * 3600 * 1000         # and no earlier than 6h before close
@@ -78,8 +82,9 @@ print(f"   {len(trades)} trade records", flush=True)
 # ------------------------------------------------ B) maker sim on KXBTC
 print("B) maker sim on KXBTC (through-price fills)", flush=True)
 results = {t: r for t, r in db.execute(
-    "SELECT ticker, result = 'yes' FROM settled_markets WHERE series = 'KXBTC'"
-    " OR ticker LIKE 'KXBTC-%'")}
+    "SELECT ticker, result = 'yes' FROM settled_markets"
+    " WHERE (series = 'KXBTC' OR ticker LIKE 'KXBTC-%')"
+    " AND close_ms >= ? AND close_ms < ?", (MIN_CLOSE_MS, MAX_CLOSE_MS))}
 
 INV_CAP = 5
 fills, mkt_pnl = [], {}

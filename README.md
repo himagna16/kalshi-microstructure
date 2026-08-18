@@ -142,10 +142,15 @@ touch, taker fees paid ([scripts/strategy_backtest.py](scripts/strategy_backtest
   buy NO at ~90¢: crossing that spread plus the fee consumes the entire bias.
   The market is *inefficient at the mid and efficient at the touch* — the
   textbook no-free-lunch result, measured.
-- **Backing favorites at 80–97¢ nets +1.5¢/contract (t = 2.2)** — the one
-  candidate edge. Treat the t-stat skeptically: same-hour strikes settle on
-  the same underlying print, so outcomes are correlated and effective sample
-  size is well below n = 1,145; and it's the best of three tested strategies.
+- **Backing favorites at 80–97¢ nets +1.5¢/contract** — the one candidate
+  edge. Clustering errors by settlement hour × underlying
+  ([scripts/robust_stats.py](scripts/robust_stats.py)) barely dents it
+  (t = 2.14 vs 2.20 naive — bands rarely hold multiple same-hour strikes), so
+  the honest residual risks are selection (best of three strategies tested)
+  and a single 19-day regime. Both are addressed the only way they can be:
+  the result is **pre-registered for out-of-sample validation** in
+  [FINDINGS_FROZEN.md](FINDINGS_FROZEN.md), on data that did not exist at
+  freeze time, with pass/fail criteria fixed in advance.
 - **The passive maker gets run over.** Quoting both sides at the touch on BTC
   hourly, with fills only when price trades *through* the quote: buys lose
   4.1¢/fill, sells 8.2¢/fill, -$913 total across 14,690 fills — versus 1–3¢

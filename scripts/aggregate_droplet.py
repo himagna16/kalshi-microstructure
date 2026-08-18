@@ -121,12 +121,15 @@ write_csv("ticker_liquidity_census.csv", ["bucket", "n_tickers"], rows)
 log("5/8 calibration at 4 horizons (index seeks per settled ticker)")
 HORIZONS_H = [0, 1, 6, 24]
 MAX_STALE_MS = 24 * 3600 * 1000
+MIN_CLOSE_MS = int(os.environ.get("MIN_CLOSE_MS", 0))
+MAX_CLOSE_MS = int(os.environ.get("MAX_CLOSE_MS", 1 << 62))
 settled = db.execute("""
     SELECT s.ticker, s.result = 'yes', s.close_ms
     FROM settled_markets s
     WHERE s.close_ms IS NOT NULL
+      AND s.close_ms >= ? AND s.close_ms < ?
       AND EXISTS (SELECT 1 FROM book_snapshots b WHERE b.ticker = s.ticker)
-""").fetchall()
+""", (MIN_CLOSE_MS, MAX_CLOSE_MS)).fetchall()
 log(f"   {len(settled)} settled tickers with book history")
 
 cal_rows, brier = [], {}
